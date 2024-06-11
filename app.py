@@ -118,6 +118,7 @@ async def read_root():
 
 @app.post("/upload")
 async def process(file: UploadFile = File(...)):
+    return {"message": "upload file!"}
     try:
         if not file.filename.endswith(('.csv')):
             return {"error": "Only files with .csv extensions are allowed."}
