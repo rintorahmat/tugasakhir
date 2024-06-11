@@ -33,6 +33,10 @@ app = FastAPI()
 split_data_storage = {}
 results_storage = {}
 
+origins = [
+    "https://tafrontend.vercel.app",  # URL frontend Anda di Vercel
+]
+
 DATABASE_URL = "sqlite:///./tugaskahir.db"
 
 engine = create_engine(DATABASE_URL)
