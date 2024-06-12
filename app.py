@@ -121,6 +121,10 @@ logging.basicConfig(level=logging.INFO)
 async def read_root():
     return {"message": "Hello, worlddd!"}
 
+@app.get("/1")
+async def read_root():
+    return {"message": "Hello, world!"}
+
 @app.post("/upload")
 async def process(file: UploadFile = File(...)):
     return {"message": "upload file!"}
