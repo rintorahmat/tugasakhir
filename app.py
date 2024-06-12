@@ -12,7 +12,7 @@ import base64
 from io import BytesIO
 from fastapi import FastAPI, UploadFile, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from clean import remove_emoticon_documents, remove_emoticons, remove_punctuation_and_numbers, tambahkan_spasi_setelah_tanda_baca, translate_text, get_sentiment_label_and_polarity, stem_text, lemmatize_text, remove_stopwords
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -117,13 +117,12 @@ logging.basicConfig(level=logging.INFO)
 
 @app.get("/")
 async def read_root():
-    return {"message": "Hello, worlddd!"}
+    return JSONResponse(content={"message": "Hello World"})
 
 @app.post("/upload")
-async def process(file: UploadFile = File(...)):
-    return {"message": "upload file!"}
+async def upload_file(file: UploadFile = File(...)):
     try:
-        if not file.filename.endswith(('.csv')):
+        if not file.filename.endswith('.csv'):
             return {"error": "Only files with .csv extensions are allowed."}
 
         file_location = os.path.join(UPLOAD_DIR, file.filename)
@@ -134,7 +133,6 @@ async def process(file: UploadFile = File(...)):
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
-        print(file_content)
         db = SessionLocal()
         db_file = FileModel(
             filename=file.filename,
@@ -144,13 +142,14 @@ async def process(file: UploadFile = File(...)):
         db.commit()
         db.refresh(db_file)
         db.close()
-        print (db_file.filename)
-        
+        print(db_file.filename)
+
         return {
             "info": f"File '{file.filename}' successfully uploaded.",
             "id": db_file.id,
         }
     except Exception as e:
+        logging.error(f"Terjadi kesalahan: {e}")
         return {"error": str(e)}
 
 @app.get("/process/{file_id}")
