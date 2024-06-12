@@ -33,8 +33,8 @@ app = FastAPI()
 split_data_storage = {}
 results_storage = {}
 
-DATABASE_URL = os.getenv('DATABASE_URL', "mysql+pymysql://admin:admin@tugas-akhir:8000/tugasakhir.db")
-# DATABASE_URL = "sqlite:///./tugaskahir.db"
+# DATABASE_URL = os.getenv('DATABASE_URL', "mysql+pymysql://admin:admin@tugas-akhir:8000/tugasakhir.db")
+DATABASE_URL = "sqlite:///./tugaskahir.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
