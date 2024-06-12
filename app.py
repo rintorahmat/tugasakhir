@@ -133,6 +133,7 @@ async def upload_file(file: UploadFile = File(...)):
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
+        # Simpan file ke database (asumsi model dan sesi database diatur dengan benar)
         db = SessionLocal()
         db_file = FileModel(
             filename=file.filename,
