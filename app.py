@@ -31,7 +31,7 @@ from typing import Optional
 app = FastAPI()
 
 origins = [
-    https://tafrontend.vercel.app/
+    "https://tafrontend.vercel.app/"
     ]
 
 split_data_storage = {}
