@@ -27,12 +27,14 @@ from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
 from pydantic import BaseModel
 from typing import Optional
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
-origins = [
-    "https://tafrontend.vercel.app/"
-    ]
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# origins = [
+#     "https://tafrontend.vercel.app/"
+#     ]
 
 split_data_storage = {}
 results_storage = {}
