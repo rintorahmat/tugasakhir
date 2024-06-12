@@ -117,12 +117,12 @@ logging.basicConfig(level=logging.INFO)
 
 @app.get("/")
 async def read_root():
-    return JSONResponse(content={"message": "Hello World"})
+    return {"message": "Hello, world!"}
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def process(file: UploadFile = File(...)):
     try:
-        if not file.filename.endswith('.csv'):
+        if not file.filename.endswith(('.csv')):
             return {"error": "Only files with .csv extensions are allowed."}
 
         file_location = os.path.join(UPLOAD_DIR, file.filename)
@@ -133,7 +133,7 @@ async def upload_file(file: UploadFile = File(...)):
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
-        # Simpan file ke database (asumsi model dan sesi database diatur dengan benar)
+        print(file_content)
         db = SessionLocal()
         db_file = FileModel(
             filename=file.filename,
@@ -143,14 +143,13 @@ async def upload_file(file: UploadFile = File(...)):
         db.commit()
         db.refresh(db_file)
         db.close()
-        print(db_file.filename)
-
+        print (db_file.filename)
+        
         return {
             "info": f"File '{file.filename}' successfully uploaded.",
             "id": db_file.id,
         }
     except Exception as e:
-        logging.error(f"Terjadi kesalahan: {e}")
         return {"error": str(e)}
 
 @app.get("/process/{file_id}")
