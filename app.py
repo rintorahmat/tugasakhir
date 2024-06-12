@@ -123,17 +123,17 @@ async def read_root():
 async def process(file: UploadFile = File(...)):
     try:
         if not file.filename.endswith(('.csv')):
-            return {"error": "Only files with .csv extensions are allowed."}
+            raise HTTPException(status_code=400, detail="Only files with .csv extensions are allowed.")
 
         file_location = os.path.join(UPLOAD_DIR, file.filename)
         with open(file_location, "wb") as file_object:
             shutil.copyfileobj(file.file, file_object)
 
-        # Baca konten file
+        # Read file content
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
-        print(file_content)
+        # Save file info to database
         db = SessionLocal()
         db_file = FileModel(
             filename=file.filename,
@@ -143,14 +143,15 @@ async def process(file: UploadFile = File(...)):
         db.commit()
         db.refresh(db_file)
         db.close()
-        print (db_file.filename)
         
         return {
             "info": f"File '{file.filename}' successfully uploaded.",
             "id": db_file.id,
         }
+    except HTTPException as http_e:
+        raise http_e
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/process/{file_id}")
 async def process(file_id: int):
