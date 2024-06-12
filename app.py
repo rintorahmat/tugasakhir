@@ -32,14 +32,10 @@ from fastapi.staticfiles import StaticFiles
 app = FastAPI()
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
-# origins = [
-#     "https://tafrontend.vercel.app/"
-#     ]
 
 split_data_storage = {}
 results_storage = {}
 
-# DATABASE_URL = os.getenv('DATABASE_URL', "mysql+pymysql://admin:admin@tugas-akhir:8000/tugasakhir.db")
 DATABASE_URL = "sqlite:///./tugaskahir.db"
 
 engine = create_engine(DATABASE_URL)
@@ -122,10 +118,6 @@ logging.basicConfig(level=logging.INFO)
 @app.get("/")
 async def read_root():
     return {"message": "Hello, worlddd!"}
-
-@app.get("/1")
-async def read_root():
-    return {"message": "Hello, world!"}
 
 @app.post("/upload")
 async def process(file: UploadFile = File(...)):
