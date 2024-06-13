@@ -33,10 +33,10 @@ app = FastAPI()
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
-# Path to upload directory
+logging.basicConfig(level=logging.DEBUG)
+
 UPLOAD_DIR = "/home/rintolase01/tugasakhir/uploads"
 
-# Create upload directory if it doesn't exist
 def create_upload_dir():
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
@@ -65,8 +65,6 @@ class HasilPre(Base):
     content = Column(BLOB)
 
 Base.metadata.create_all(bind=engine)
-
-logging.basicConfig(level=logging.DEBUG)
 
 # Allow all origins
 app.add_middleware(
