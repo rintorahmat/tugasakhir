@@ -122,16 +122,20 @@ async def read_root():
 @app.post("/upload")
 async def upload(file: UploadFile = File(...)):
     try:
+        # Memastikan hanya file dengan ekstensi .csv yang diizinkan
         if not file.filename.endswith('.csv'):
             raise HTTPException(status_code=400, detail="Only files with .csv extensions are allowed.")
 
+        # Menyimpan file ke direktori uploads
         file_location = os.path.join(UPLOAD_DIR, file.filename)
         with open(file_location, "wb") as file_object:
             shutil.copyfileobj(file.file, file_object)
 
+        # Membaca isi file yang diunggah
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
+        # Menyimpan informasi file ke dalam database
         db = SessionLocal()
         db_file = FileModel(
             filename=file.filename,
@@ -141,7 +145,8 @@ async def upload(file: UploadFile = File(...)):
         db.commit()
         db.refresh(db_file)
         db.close()
-        
+
+        # Mengembalikan respons sukses
         return {
             "info": f"File '{file.filename}' successfully uploaded.",
             "id": db_file.id,
