@@ -33,6 +33,8 @@ app = FastAPI()
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logging.basicConfig(level=logging.DEBUG)
 
 UPLOAD_DIR = "/home/rintolase01/tugasakhir/uploads"
@@ -110,10 +112,7 @@ def splitdata(file_id: int, test_size: float):
 
     return X_train, X_test, y_train, y_test
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-
-@app.get("/")
+@app.get("/1")
 async def read_root():
     return {"message": "Hello, world!"}
 
