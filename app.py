@@ -175,6 +175,7 @@ async def process(file_id: int):
         print(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
         print(data)
         data['Translated'] = data['content'].apply(translate_text)
+        print(data)
         data['Spacing'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
         data['HapusEmoticon'] = data['Spacing'].apply(remove_emoticons)
         data['HapusTandaBaca'] = data['HapusEmoticon'].apply(remove_punctuation_and_numbers)
@@ -182,7 +183,9 @@ async def process(file_id: int):
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
         data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
         data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
+        print(data)
         data['Stemmed'] = data['Lemmatized'].apply(stem_text)
+        print(data)
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
         data[['Sentiment_Label', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
