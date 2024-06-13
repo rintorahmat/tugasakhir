@@ -121,7 +121,6 @@ async def read_root():
 
 @app.post("/upload")
 async def process(file: UploadFile = File(...)):
-    return {"message": "Hello, world!"}
     try:
         if not file.filename.endswith('.csv'):
             raise HTTPException(status_code=400, detail="Only files with .csv extensions are allowed.")
@@ -155,6 +154,7 @@ async def process(file: UploadFile = File(...)):
 
 @app.get("/process/{file_id}")
 async def process(file_id: int):
+    return {"message": "Hello, world!"}
     try:
         logging.debug("Memulai proses file.")
         db = SessionLocal()
