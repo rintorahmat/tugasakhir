@@ -59,7 +59,7 @@ Base.metadata.create_all(bind=engine)
 logging.basicConfig(level=logging.DEBUG)
 
 # Path to upload directory
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = "@/home/rintolase01/tugasakhir/uploads"
 
 # Create upload directory if it doesn't exist
 def create_upload_dir():
