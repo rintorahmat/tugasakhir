@@ -37,7 +37,7 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logging.basicConfig(level=logging.DEBUG)
 
-UPLOAD_DIR = "/home/rintolase01/tugasakhir/uploads"
+UPLOAD_DIR = "/home/rintolase01/tugasakhir/backEnd/uploads"
 
 def create_upload_dir():
     if not os.path.exists(UPLOAD_DIR):
@@ -48,7 +48,7 @@ create_upload_dir()
 split_data_storage = {}
 results_storage = {}
 
-DATABASE_URL = "sqlite:///./tugaskahir.db"
+DATABASE_URL = "sqlite:///./tugasakhir.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
