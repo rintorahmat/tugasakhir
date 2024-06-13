@@ -154,7 +154,6 @@ async def process(file: UploadFile = File(...)):
 
 @app.get("/process/{file_id}")
 async def process(file_id: int):
-    return {"message": "Hello, world!"}
     try:
         logging.debug("Memulai proses file.")
         db = SessionLocal()
