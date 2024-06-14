@@ -35,7 +35,7 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logging.basicConfig(level=logging.DEBUG)
 
-UPLOAD_DIR = "/home/rintolase01/tugasakhir/backEnd/uploads"
+UPLOAD_DIR = "/home/rintolase01/tugasakhir/tugasakhir/uploads"
 
 def create_upload_dir():
     if not os.path.exists(UPLOAD_DIR):
