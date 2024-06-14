@@ -110,7 +110,7 @@ def splitdata(file_id: int, test_size: float):
 
     return X_train, X_test, y_train, y_test
 
-@app.get("/1")
+@app.get("/")
 async def read_root():
     return {"message": "Hello, world!"}
 
