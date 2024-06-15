@@ -156,6 +156,39 @@ async def upload(file: UploadFile = File(...)):
         logging.error(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/upload")
+async def process(file: UploadFile = File(...)):
+    try:
+        if not file.filename.endswith(('.csv')):
+            return {"error": "Only files with .csv extensions are allowed."}
+
+        file_location = os.path.join(UPLOAD_DIR, file.filename)
+        with open(file_location, "wb") as file_object:
+            shutil.copyfileobj(file.file, file_object)
+
+        # Baca konten file
+        with open(file_location, "rb") as file_object:
+            file_content = file_object.read()
+
+        print(file_content)
+        db = SessionLocal()
+        db_file = FileModel(
+            filename=file.filename,
+            content=file_content
+        )
+        db.add(db_file)
+        db.commit()
+        db.refresh(db_file)
+        db.close()
+        print (db_file.filename)
+        
+        return {
+            "info": f"File '{file.filename}' successfully uploaded.",
+            "id": db_file.id,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/process/{file_id}")
 async def process(file_id: int):
     try:
@@ -171,32 +204,22 @@ async def process(file_id: int):
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
-            
-         # Process data in chunks
-        chunk_size = 500  # Adjust based on memory constraints
-        processed_chunks = []
-
-        for chunk in pd.read_csv(io.BytesIO(content), chunksize=chunk_size):
-            chunk = chunk[['content']]
-            chunk = remove_emoticon_documents(chunk)
-            jumlah_data_sesudah = len(chunk)
-            logging.debug(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
-            chunk['Translated'] = chunk['content'].apply(translate_text)
-            chunk['Spacing'] = chunk['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
-            chunk['HapusEmoticon'] = chunk['Spacing'].apply(remove_emoticons)
-            chunk['HapusTandaBaca'] = chunk['HapusEmoticon'].apply(remove_punctuation_and_numbers)
-            chunk['LowerCasing'] = chunk['HapusTandaBaca'].str.lower()
-            chunk['Tokenizing'] = chunk['LowerCasing'].apply(word_tokenize)
-            chunk['Lemmatized'] = chunk['Tokenizing'].apply(lemmatize_text)
-            chunk['Lemmatized'] = chunk['Lemmatized'].apply(lambda x: ' '.join(x))
-            chunk['Stemmed'] = chunk['Lemmatized'].apply(stem_text)
-            chunk['StopWord'] = chunk['Stemmed'].apply(remove_stopwords)
-            chunk[['Sentiment_Label', 'Polarity']] = chunk['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
-
-            processed_chunks.append(chunk)
-
-        # Combine all processed chunks
-        data = pd.concat(processed_chunks, ignore_index=True)
+        data = data[['content']]
+        data = remove_emoticon_documents(data)
+        jumlah_data_sesudah = len(data)
+        print(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
+        print(data)
+        # data['Translated'] = data['content'].apply(translate_text)
+        data['Spacing'] = data['content'].apply(tambahkan_spasi_setelah_tanda_baca)
+        data['HapusEmoticon'] = data['Spacing'].apply(remove_emoticons)
+        data['HapusTandaBaca'] = data['HapusEmoticon'].apply(remove_punctuation_and_numbers)
+        data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
+        data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
+        data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
+        data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
+        data['Stemmed'] = data['Lemmatized'].apply(stem_text)
+        data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
+        data[['Sentiment_Label', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
         sentiment_counts = data[['Sentiment_Label']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
