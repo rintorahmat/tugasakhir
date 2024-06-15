@@ -8,7 +8,7 @@ stop_words_indonesian = set(stopwords.words('indonesian'))
 stop_words_english = set(stopwords.words('english'))
 
 def remove_emoticon_documents(df):
-    emoticon_pattern = r'^[\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\u2600-\u26FF\u2700-\u27BF]+$'
+    emoticon_pattern = r'^[\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\u2600-\u26FF\u2700-\u27BF\s]+$'
     df['content'] = df['content'].apply(lambda x: '' if re.match(emoticon_pattern, str(x)) else x)
     df = df[df['content'] != '']
     return df
