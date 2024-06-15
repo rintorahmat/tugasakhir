@@ -172,7 +172,9 @@ async def process(file_id: int):
         jumlah_data_sesudah = len(data)
         print(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
         print(data)
-        data['Translated'] = data['content'].apply(translate_text)
+        data['Translated'] = data['content'].apply(lambda x: translate_text(x) if x else "Translation failed")
+        # Memastikan tidak ada nilai None dalam kolom 'Translated'
+        data['Translated'].fillna("Translation failed", inplace=True)
         print(data)
         data['Spacing'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
         data['HapusEmoticon'] = data['Spacing'].apply(remove_emoticons)
