@@ -12,7 +12,7 @@ import base64
 from io import BytesIO
 from fastapi import FastAPI, UploadFile, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from clean import remove_emoticon_documents, remove_emoticons, remove_punctuation_and_numbers, tambahkan_spasi_setelah_tanda_baca, translate_text, get_sentiment_label_and_polarity, stem_text, lemmatize_text, remove_stopwords
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -27,13 +27,26 @@ from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
 from pydantic import BaseModel
 from typing import Optional
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+
+UPLOAD_DIR = "/home/rintolase01/tugasakhir/tugasakhir/uploads"
+
+def create_upload_dir():
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+
+create_upload_dir()
 
 split_data_storage = {}
 results_storage = {}
 
-DATABASE_URL = "sqlite:///./tugaskahir.db"
+DATABASE_URL = "sqlite:///./tugasakhir.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -52,18 +65,6 @@ class HasilPre(Base):
     content = Column(BLOB)
 
 Base.metadata.create_all(bind=engine)
-
-logging.basicConfig(level=logging.DEBUG)
-
-# Path to upload directory
-UPLOAD_DIR = "uploads"
-
-# Create upload directory if it doesn't exist
-def create_upload_dir():
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR)
-
-create_upload_dir()
 
 # Allow all origins
 app.add_middleware(
@@ -109,28 +110,27 @@ def splitdata(file_id: int, test_size: float):
 
     return X_train, X_test, y_train, y_test
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-
 @app.get("/")
 async def read_root():
     return {"message": "Hello, world!"}
 
 @app.post("/upload")
-async def process(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File(...)):
     try:
-        if not file.filename.endswith(('.csv')):
-            return {"error": "Only files with .csv extensions are allowed."}
+        # Memastikan hanya file dengan ekstensi .csv yang diizinkan
+        if not file.filename.endswith('.csv'):
+            raise HTTPException(status_code=400, detail="Only files with .csv extensions are allowed.")
 
+        # Menyimpan file ke direktori uploads
         file_location = os.path.join(UPLOAD_DIR, file.filename)
         with open(file_location, "wb") as file_object:
             shutil.copyfileobj(file.file, file_object)
 
-        # Baca konten file
+        # Membaca isi file yang diunggah
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
-        print(file_content)
+        # Menyimpan informasi file ke dalam database
         db = SessionLocal()
         db_file = FileModel(
             filename=file.filename,
@@ -140,14 +140,17 @@ async def process(file: UploadFile = File(...)):
         db.commit()
         db.refresh(db_file)
         db.close()
-        print (db_file.filename)
-        
+
+        # Mengembalikan respons sukses
         return {
             "info": f"File '{file.filename}' successfully uploaded.",
             "id": db_file.id,
         }
+    except HTTPException as http_e:
+        raise http_e
     except Exception as e:
-        return {"error": str(e)}
+        logging.error(f"Error occurred: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/process/{file_id}")
 async def process(file_id: int):
@@ -169,15 +172,18 @@ async def process(file_id: int):
         jumlah_data_sesudah = len(data)
         print(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
         print(data)
-        # data['Translated'] = data['content'].apply(translate_text)
-        data['Spacing'] = data['content'].apply(tambahkan_spasi_setelah_tanda_baca)
+        data['Translated'] = data['content'].apply(translate_text)
+        print(data)
+        data['Spacing'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
         data['HapusEmoticon'] = data['Spacing'].apply(remove_emoticons)
         data['HapusTandaBaca'] = data['HapusEmoticon'].apply(remove_punctuation_and_numbers)
         data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
         data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
         data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
+        print(data)
         data['Stemmed'] = data['Lemmatized'].apply(stem_text)
+        print(data)
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
         data[['Sentiment_Label', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
