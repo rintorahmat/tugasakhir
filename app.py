@@ -192,7 +192,7 @@ async def process(file: UploadFile = File(...)):
 @app.get("/process/{file_id}")
 async def process(file_id: int):
     try:
-        await notify_clients("Starting file processing.")
+        # await notify_clients("Starting file processing.")
         db = SessionLocal()
         db_file = db.query(FileModel).filter(FileModel.id == file_id).first()
         db.close()
@@ -212,10 +212,10 @@ async def process(file_id: int):
             chunk = chunk[['content']]
             chunk = remove_emoticon_documents(chunk)
             jumlah_data_sesudah = len(chunk)
-            await notify_clients(f"Number of data points after removing emoticons: {jumlah_data_sesudah}")
+            # await notify_clients(f"Number of data points after removing emoticons: {jumlah_data_sesudah}")
             
             chunk['Translated'] = chunk['content'].apply(translate_text)
-            await notify_clients(f"Translated Data: {chunk[['content', 'Translated']].to_dict(orient='records')}")
+            # await notify_clients(f"Translated Data: {chunk[['content', 'Translated']].to_dict(orient='records')}")
 
             chunk['Spacing'] = chunk['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
             chunk['HapusEmoticon'] = chunk['Spacing'].apply(remove_emoticons)
