@@ -186,7 +186,8 @@ async def process(file_id: int):
         print(data)
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
         data[['Sentiment_Label', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
-
+        print(data)
+        
         sentiment_counts = data[['Sentiment_Label']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
         positif  = int(sentiment_counts.get('positif', 0))
