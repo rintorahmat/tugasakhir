@@ -192,7 +192,7 @@ async def process(file: UploadFile = File(...)):
 @app.get("/process/{file_id}")
 async def process(file_id: int):
     try:
-        logging.debug("Memulai proses file.")
+        await notify_clients("Starting file processing.")
         db = SessionLocal()
         db_file = db.query(FileModel).filter(FileModel.id == file_id).first()
         db.close()
@@ -204,35 +204,45 @@ async def process(file_id: int):
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
-        data = data[['content']]
-        data = remove_emoticon_documents(data)
-        jumlah_data_sesudah = len(data)
-        print(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
-        print(data)
-        # data['Translated'] = data['content'].apply(translate_text)
-        data['Spacing'] = data['content'].apply(tambahkan_spasi_setelah_tanda_baca)
-        data['HapusEmoticon'] = data['Spacing'].apply(remove_emoticons)
-        data['HapusTandaBaca'] = data['HapusEmoticon'].apply(remove_punctuation_and_numbers)
-        data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
-        data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
-        data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
-        data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
-        data['Stemmed'] = data['Lemmatized'].apply(stem_text)
-        data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
-        data[['Sentiment_Label', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
+        
+        chunk_size = 500
+        processed_chunks = []
+
+        for chunk in pd.read_csv(io.BytesIO(content), chunksize=chunk_size):
+            chunk = chunk[['content']]
+            chunk = remove_emoticon_documents(chunk)
+            jumlah_data_sesudah = len(chunk)
+            await notify_clients(f"Number of data points after removing emoticons: {jumlah_data_sesudah}")
+            
+            chunk['Translated'] = chunk['content'].apply(translate_text)
+            await notify_clients(f"Translated Data: {chunk[['content', 'Translated']].to_dict(orient='records')}")
+
+            chunk['Spacing'] = chunk['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
+            chunk['HapusEmoticon'] = chunk['Spacing'].apply(remove_emoticons)
+            chunk['HapusTandaBaca'] = chunk['HapusEmoticon'].apply(remove_punctuation_and_numbers)
+            chunk['LowerCasing'] = chunk['HapusTandaBaca'].str.lower()
+            chunk['Tokenizing'] = chunk['LowerCasing'].apply(word_tokenize)
+            chunk['Lemmatized'] = chunk['Tokenizing'].apply(lemmatize_text)
+            chunk['Lemmatized'] = chunk['Lemmatized'].apply(lambda x: ' '.join(x))
+            chunk['Stemmed'] = chunk['Lemmatized'].apply(stem_text)
+            chunk['StopWord'] = chunk['Stemmed'].apply(remove_stopwords)
+            chunk[['Sentiment_Label', 'Polarity']] = chunk['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
+
+            processed_chunks.append(chunk)
+
+        data = pd.concat(processed_chunks, ignore_index=True)
 
         sentiment_counts = data[['Sentiment_Label']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
-        positif  = int(sentiment_counts.get('positif', 0))
-        negatif = int (sentiment_counts.get('negatif', 0))
+        positif = int(sentiment_counts.get('positif', 0))
+        negatif = int(sentiment_counts.get('negatif', 0))
         
         data['StopWord'] = data['StopWord'].astype(str)
         all_text = ''.join(data['StopWord'])
 
         wordcloud = WordCloud(width=1000, height=500, max_font_size=150, random_state=42).generate(all_text)
-        # Konversi gambar wordcloud ke base64
         buffer = BytesIO()
-        plt.figure(figsize=(10,6))
+        plt.figure(figsize=(10, 6))
         plt.imshow(wordcloud, interpolation="bilinear")
         plt.axis("off")
         plt.savefig(buffer, format="png")
@@ -241,10 +251,10 @@ async def process(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'StopWord', 'Sentiment_Label', 'Polarity'  ]]
+        new_data = data[['content', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Lemmatized', 'StopWord', 'Sentiment_Label', 'Polarity']]
         save_preprocessed_data(new_data)
-        
-        file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
+
+        file_location = os.path.join('UPLOAD_DIR', 'preprocessed_data.csv')
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
@@ -257,19 +267,20 @@ async def process(file_id: int):
         db.commit()
         db.refresh(db_file)
         db.close()
-        print (db_file.filename)
+        logging.debug(f"Preprocessed file saved as: {db_file.filename}")
 
         return {
             'data': new_data.to_dict(orient='records'),
             'id': db_file.id,
             'label_netral': netral,
-            'label_positif':  positif,
+            'label_positif': positif,
             'label_negatif': negatif,
             'wordcloud_base64': img_str,
         }
-    
+
     except Exception as e:
         logging.error(f"Terjadi kesalahan: {e}")
+        await notify_clients(f"Error occurred: {e}")
         return {"error": str(e)}
         
 @app.post("/splitdata/{file_id}")
