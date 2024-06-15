@@ -280,7 +280,7 @@ async def process(file_id: int):
 
     except Exception as e:
         logging.error(f"Terjadi kesalahan: {e}")
-        await notify_clients(f"Error occurred: {e}")
+        # await notify_clients(f"Error occurred: {e}")
         return {"error": str(e)}
         
 @app.post("/splitdata/{file_id}")
