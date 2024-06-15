@@ -12,12 +12,8 @@ import base64
 from io import BytesIO
 from fastapi import FastAPI, UploadFile, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
-from clean import (
-    remove_emoticon_documents, remove_emoticons, remove_punctuation_and_numbers,
-    tambahkan_spasi_setelah_tanda_baca, translate_text, get_sentiment_label_and_polarity,
-    stem_text, lemmatize_text, remove_stopwords
-)
+from fastapi.responses import FileResponse
+from clean import remove_emoticon_documents, remove_emoticons, remove_punctuation_and_numbers, tambahkan_spasi_setelah_tanda_baca, translate_text, get_sentiment_label_and_polarity, stem_text, lemmatize_text, remove_stopwords
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
@@ -31,26 +27,13 @@ from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
 from pydantic import BaseModel
 from typing import Optional
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logging.basicConfig(level=logging.DEBUG)
-
-UPLOAD_DIR = "/home/rintolase01/tugasakhir/tugasakhir/uploads"
-
-def create_upload_dir():
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR)
-
-create_upload_dir()
 
 split_data_storage = {}
 results_storage = {}
 
-DATABASE_URL = "sqlite:///./tugasakhir.db"
+DATABASE_URL = "sqlite:///./tugaskahir.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -69,6 +52,18 @@ class HasilPre(Base):
     content = Column(BLOB)
 
 Base.metadata.create_all(bind=engine)
+
+logging.basicConfig(level=logging.DEBUG)
+
+# Path to upload directory
+UPLOAD_DIR = "uploads"
+
+# Create upload directory if it doesn't exist
+def create_upload_dir():
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+
+create_upload_dir()
 
 # Allow all origins
 app.add_middleware(
@@ -114,47 +109,12 @@ def splitdata(file_id: int, test_size: float):
 
     return X_train, X_test, y_train, y_test
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
 @app.get("/")
 async def read_root():
     return {"message": "Hello, world!"}
-
-@app.post("/upload")
-async def upload(file: UploadFile = File(...)):
-    try:
-        # Memastikan hanya file dengan ekstensi .csv yang diizinkan
-        if not file.filename.endswith('.csv'):
-            raise HTTPException(status_code=400, detail="Only files with .csv extensions are allowed.")
-
-        # Menyimpan file ke direktori uploads
-        file_location = os.path.join(UPLOAD_DIR, file.filename)
-        with open(file_location, "wb") as file_object:
-            shutil.copyfileobj(file.file, file_object)
-
-        # Membaca isi file yang diunggah
-        with open(file_location, "rb") as file_object:
-            file_content = file_object.read()
-
-        # Menyimpan informasi file ke dalam database
-        db = SessionLocal()
-        db_file = FileModel(
-            filename=file.filename,
-            content=file_content
-        )
-        db.add(db_file)
-        db.commit()
-        db.refresh(db_file)
-        db.close()
-
-        # Mengembalikan respons sukses
-        return {
-            "info": f"File '{file.filename}' successfully uploaded.",
-            "id": db_file.id,
-        }
-    except HTTPException as http_e:
-        raise http_e
-    except Exception as e:
-        logging.error(f"Error occurred: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/upload")
 async def process(file: UploadFile = File(...)):
@@ -192,7 +152,7 @@ async def process(file: UploadFile = File(...)):
 @app.get("/process/{file_id}")
 async def process(file_id: int):
     try:
-        # await notify_clients("Starting file processing.")
+        logging.debug("Memulai proses file.")
         db = SessionLocal()
         db_file = db.query(FileModel).filter(FileModel.id == file_id).first()
         db.close()
@@ -204,45 +164,35 @@ async def process(file_id: int):
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
-        
-        chunk_size = 500
-        processed_chunks = []
-
-        for chunk in pd.read_csv(io.BytesIO(content), chunksize=chunk_size):
-            chunk = chunk[['content']]
-            chunk = remove_emoticon_documents(chunk)
-            jumlah_data_sesudah = len(chunk)
-            # await notify_clients(f"Number of data points after removing emoticons: {jumlah_data_sesudah}")
-            
-            chunk['Translated'] = chunk['content'].apply(translate_text)
-            # await notify_clients(f"Translated Data: {chunk[['content', 'Translated']].to_dict(orient='records')}")
-
-            chunk['Spacing'] = chunk['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
-            chunk['HapusEmoticon'] = chunk['Spacing'].apply(remove_emoticons)
-            chunk['HapusTandaBaca'] = chunk['HapusEmoticon'].apply(remove_punctuation_and_numbers)
-            chunk['LowerCasing'] = chunk['HapusTandaBaca'].str.lower()
-            chunk['Tokenizing'] = chunk['LowerCasing'].apply(word_tokenize)
-            chunk['Lemmatized'] = chunk['Tokenizing'].apply(lemmatize_text)
-            chunk['Lemmatized'] = chunk['Lemmatized'].apply(lambda x: ' '.join(x))
-            chunk['Stemmed'] = chunk['Lemmatized'].apply(stem_text)
-            chunk['StopWord'] = chunk['Stemmed'].apply(remove_stopwords)
-            chunk[['Sentiment_Label', 'Polarity']] = chunk['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
-
-            processed_chunks.append(chunk)
-
-        data = pd.concat(processed_chunks, ignore_index=True)
+        data = data[['content']]
+        data = remove_emoticon_documents(data)
+        jumlah_data_sesudah = len(data)
+        print(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
+        print(data)
+        # data['Translated'] = data['content'].apply(translate_text)
+        data['Spacing'] = data['content'].apply(tambahkan_spasi_setelah_tanda_baca)
+        data['HapusEmoticon'] = data['Spacing'].apply(remove_emoticons)
+        data['HapusTandaBaca'] = data['HapusEmoticon'].apply(remove_punctuation_and_numbers)
+        data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
+        data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
+        data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
+        data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
+        data['Stemmed'] = data['Lemmatized'].apply(stem_text)
+        data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
+        data[['Sentiment_Label', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
         sentiment_counts = data[['Sentiment_Label']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
-        positif = int(sentiment_counts.get('positif', 0))
-        negatif = int(sentiment_counts.get('negatif', 0))
+        positif  = int(sentiment_counts.get('positif', 0))
+        negatif = int (sentiment_counts.get('negatif', 0))
         
         data['StopWord'] = data['StopWord'].astype(str)
         all_text = ''.join(data['StopWord'])
 
         wordcloud = WordCloud(width=1000, height=500, max_font_size=150, random_state=42).generate(all_text)
+        # Konversi gambar wordcloud ke base64
         buffer = BytesIO()
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(10,6))
         plt.imshow(wordcloud, interpolation="bilinear")
         plt.axis("off")
         plt.savefig(buffer, format="png")
@@ -251,13 +201,10 @@ async def process(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Lemmatized', 'StopWord', 'Sentiment_Label', 'Polarity']]
+        new_data = data[['content', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'StopWord', 'Sentiment_Label', 'Polarity'  ]]
         save_preprocessed_data(new_data)
-
-        # file_location = os.path.join('UPLOAD_DIR', 'preprocessed_data.csv')
-        # with open(file_location, "rb") as file_object:
-        #     file_content = file_object.read()
-        file_location = os.path.join('UPLOAD_DIR', 'preprocessed_data.csv')
+        
+        file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
@@ -270,22 +217,21 @@ async def process(file_id: int):
         db.commit()
         db.refresh(db_file)
         db.close()
-        logging.debug(f"Preprocessed file saved as: {db_file.filename}")
+        print (db_file.filename)
 
         return {
             'data': new_data.to_dict(orient='records'),
             'id': db_file.id,
             'label_netral': netral,
-            'label_positif': positif,
+            'label_positif':  positif,
             'label_negatif': negatif,
             'wordcloud_base64': img_str,
         }
-
+    
     except Exception as e:
         logging.error(f"Terjadi kesalahan: {e}")
-        # await notify_clients(f"Error occurred: {e}")
         return {"error": str(e)}
-        
+
 @app.post("/splitdata/{file_id}")
 async def split_data_endpoint(file_id: int, request: SplitDataRequest):
     try:
