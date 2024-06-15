@@ -254,6 +254,9 @@ async def process(file_id: int):
         new_data = data[['content', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Lemmatized', 'StopWord', 'Sentiment_Label', 'Polarity']]
         save_preprocessed_data(new_data)
 
+        # file_location = os.path.join('UPLOAD_DIR', 'preprocessed_data.csv')
+        # with open(file_location, "rb") as file_object:
+        #     file_content = file_object.read()
         file_location = os.path.join('UPLOAD_DIR', 'preprocessed_data.csv')
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
