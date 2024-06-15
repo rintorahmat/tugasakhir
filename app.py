@@ -172,9 +172,9 @@ async def process(file_id: int):
         jumlah_data_sesudah = len(data)
         print(f"Jumlah data setelah menghapus emotikon: {jumlah_data_sesudah}")
         print(data)
-        # data['Translated'] = data['content'].apply(translate_text)
-        # print(data)
-        data['Spacing'] = data['content'].apply(tambahkan_spasi_setelah_tanda_baca)
+        data['Translated'] = data['content'].apply(translate_text)
+        print(data)
+        data['Spacing'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
         data['HapusEmoticon'] = data['Spacing'].apply(remove_emoticons)
         data['HapusTandaBaca'] = data['HapusEmoticon'].apply(remove_punctuation_and_numbers)
         data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
@@ -208,7 +208,7 @@ async def process(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'StopWord', 'Sentiment_Label', 'Polarity'  ]]
+        new_data = data[['content', 'Translated', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'StopWord', 'Sentiment_Label', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
