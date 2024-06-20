@@ -790,6 +790,7 @@ async def sentimenanalis(file_id: int):
 
         data['StopWord'] = data['StopWord'].astype(str)
         all_text = ''.join(data['StopWord'])
+
         wordcloud = WordCloud(width=1000, height=500, max_font_size=150, random_state=42).generate(all_text)
         # Konversi gambar wordcloud ke base64
         buffer = BytesIO()
@@ -804,22 +805,20 @@ async def sentimenanalis(file_id: int):
         
         sentimenanalis_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
 
-        sentimenanalis_file_location = os.path.join(UPLOAD_DIR, 'sentimenanalis.csv')
-        sentimenanalis_data.to_csv(sentimenanalis_file_location, index=False)
-        
-        with open(sentimenanalis_file_location, "rb") as file_object:
+        file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
+        with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
         db = SessionLocal()
         db_sentimenanalis_file = HasilPre(
-            filename='sentimenanalis.csv',
+            filename='preprocessed_data.csv',
             content=file_content
         )
         db.add(db_sentimenanalis_file)
         db.commit()
         db.refresh(db_sentimenanalis_file)
         db.close()
-        print(db_sentimenanalis_file.filename)
+        print (db_sentimenanalis_file.filename)
 
         return JSONResponse(content={
             'data': sentimenanalis_data.to_dict(orient='records'),
