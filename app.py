@@ -113,12 +113,6 @@ class HasilPre10(Base):
     filename = Column(String, index=True)
     content = Column(BLOB)
 
-class HasilPre11(Base):
-    __tablename__ = "sentimenanalis"
-    id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
-    content = Column(BLOB)
-
 Base.metadata.create_all(bind=engine)
 
 logging.basicConfig(level=logging.DEBUG)
