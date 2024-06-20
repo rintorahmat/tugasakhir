@@ -843,8 +843,8 @@ async def split_data_endpoint(file_id: int, request: SplitDataRequest):
         }
 
         # Convert split data to DataFrames
-        train_data = pd.DataFrame({'StopWord': X_train, 'Sentiment_Label': y_train})
-        test_data = pd.DataFrame({'StopWord': X_test, 'Sentiment_Label': y_test})
+        train_data = pd.DataFrame({'StopWord': X_train, 'SentimentLabel': y_train})
+        test_data = pd.DataFrame({'StopWord': X_test, 'SentimentLabel': y_test})
 
         # Return success message along with train and test data
         return {
