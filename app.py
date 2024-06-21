@@ -28,14 +28,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
 from pydantic import BaseModel
-from typing import Optional
 
 app = FastAPI()
 
 split_data_storage = {}
 results_storage = {}
 
-DATABASE_URL = "sqlite:///./tugaskahir.db"
+DATABASE_URL = "sqlite:///./tugasakhir.db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -116,24 +115,22 @@ class HasilPre10(Base):
 Base.metadata.create_all(bind=engine)
 
 logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
-# Path to upload directory
 UPLOAD_DIR = "uploads"
 
-# Create upload directory if it doesn't exist
 def create_upload_dir():
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
 
 create_upload_dir()
 
-# Allow all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 class SplitDataRequest(BaseModel):
     file_id: int
@@ -158,12 +155,13 @@ def splitdata(file_id: int, test_size: float):
     if db_file is None:
         raise HTTPException(status_code=404, detail="File not found")
     content = db_file.content
+    print(f"Processing file: {db_file.filename}")
     data = pd.read_csv(io.BytesIO(content))
     if data.empty:
         raise HTTPException(status_code=400, detail="No data found in the file")
 
-    X = data['StopWord']  # Fitur
-    y = data['SentimentLabel']  # Target
+    X = data['StopWord']
+    y = data['SentimentLabel']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
     logging.debug(f"Jumlah data dalam set pelatihan: {len(X_train)}")
@@ -173,8 +171,6 @@ def splitdata(file_id: int, test_size: float):
 
 def lemmatize_tokens(tokens):
     return [lemmatizer.lemmatize(token) for token in tokens]
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 
 @app.get("/")
 async def read_root():
@@ -190,7 +186,6 @@ async def process(file: UploadFile = File(...)):
         with open(file_location, "wb") as file_object:
             shutil.copyfileobj(file.file, file_object)
 
-        # Baca konten file
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
@@ -216,7 +211,6 @@ async def process(file: UploadFile = File(...)):
 @app.get("/process/{file_id}")
 async def process(file_id: int):
     try:
-        logging.debug("Memulai proses file.")
         db = SessionLocal()
         db_file = db.query(FileModel).filter(FileModel.id == file_id).first()
         db.close()
@@ -241,9 +235,9 @@ async def process(file_id: int):
         data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
         data['Stemmed'] = data['Lemmatized'].apply(stem_text)
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
-        data[['Sentiment_Label', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
+        data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
-        sentiment_counts = data[['Sentiment_Label']].value_counts()
+        sentiment_counts = data[['SentimentLabel']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
         positif  = int(sentiment_counts.get('positif', 0))
         negatif = int (sentiment_counts.get('negatif', 0))
@@ -252,7 +246,6 @@ async def process(file_id: int):
         all_text = ''.join(data['StopWord'])
 
         wordcloud = WordCloud(width=1000, height=500, max_font_size=150, random_state=42).generate(all_text)
-        # Konversi gambar wordcloud ke base64
         buffer = BytesIO()
         plt.figure(figsize=(10,6))
         plt.imshow(wordcloud, interpolation="bilinear")
@@ -263,7 +256,7 @@ async def process(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'Translated', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord', 'Sentiment_Label', 'Polarity'  ]]
+        new_data = data[['content', 'Translated', 'Spacing', 'HapusEmoticon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
@@ -304,14 +297,23 @@ async def procesblankdata(file_id: int):
             raise HTTPException(status_code=404, detail="File not found")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
+        
+        initial_row_count = len(data)
+
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
+        
         data = data[['content']]
         
         data = remove_emoticon_documents(data)
         
+        final_row_count = len(data)
+        number_of_rows_removed = initial_row_count - final_row_count
+        
+        print(f"Number of rows removed: {number_of_rows_removed}")
+
         new_data = data[['content']]
         save_preprocessed_data(new_data)
         
@@ -333,6 +335,7 @@ async def procesblankdata(file_id: int):
         return JSONResponse(content={
             'data': new_data.to_dict(orient='records'),
             'id': db_file.id,
+            'rows_removed': number_of_rows_removed 
         })
 
     except Exception as e:
@@ -443,7 +446,7 @@ async def delemot(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'Space' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'Space' column found in the file")
         
         data['DeleteEmotikon'] = data['Space'].apply(remove_emoticons)
         
@@ -489,7 +492,7 @@ async def hapustandabaca(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'DeleteEmotikon' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'DeleteEmotikon' column found in the file")
         
         data['HapusTandaBaca'] = data['DeleteEmotikon'].apply(remove_punctuation_and_numbers)
         
@@ -535,7 +538,7 @@ async def lowercasing(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'HapusTandaBaca' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'HapusTandaBaca' column found in the file")
         
         data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
         
@@ -581,7 +584,7 @@ async def tokenize(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'LowerCasing' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'LowerCasing' column found in the file")
         
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
         
@@ -627,12 +630,11 @@ async def lemmatized(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'Tokenizing' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'Tokenizing' column found in the file")
         
         data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
         data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
 
-        # Apply lemmatization
         data['Lemmatized'] = data['Tokenizing'].apply(lambda x: word_tokenize(x))  # Tokenize the string if not already tokenized
         data['Lemmatized'] = data['Lemmatized'].apply(lemmatize_tokens)  # Lemmatize each token
         data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))  # Join the lemmatized tokens back into a string
@@ -679,7 +681,7 @@ async def stemmed(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'Lemmatized' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'Lemmatized' column found in the file")
         
         data['Stemmed'] = data['Lemmatized'].apply(stem_text)
         
@@ -725,11 +727,9 @@ async def stopword(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'Stemmed' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
         
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
-        data['StopWord'] = data['StopWord'].astype(str)
-        all_text = ''.join(data['StopWord'])
         
         stopword_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord']]
 
@@ -767,13 +767,12 @@ async def sentimenanalis(file_id: int):
         db.close()
         if db_file is None:
             raise HTTPException(status_code=404, detail="File not found")
-        print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'StopWord' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'StopWord' column found in the file")
         
         data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
@@ -781,12 +780,11 @@ async def sentimenanalis(file_id: int):
         netral = int(sentiment_counts.get('netral', 0))
         positif  = int(sentiment_counts.get('positif', 0))
         negatif = int (sentiment_counts.get('negatif', 0))
-
+        
         data['StopWord'] = data['StopWord'].astype(str)
         all_text = ''.join(data['StopWord'])
 
         wordcloud = WordCloud(width=1000, height=500, max_font_size=150, random_state=42).generate(all_text)
-        # Konversi gambar wordcloud ke base64
         buffer = BytesIO()
         plt.figure(figsize=(10,6))
         plt.imshow(wordcloud, interpolation="bilinear")
@@ -796,57 +794,54 @@ async def sentimenanalis(file_id: int):
         buffer.seek(0)
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-        
-        sentimenanalis_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
 
+        new_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
+        save_preprocessed_data(new_data)
+        
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
         db = SessionLocal()
-        db_sentimenanalis_file = HasilPre(
+        db_file = HasilPre(
             filename='preprocessed_data.csv',
             content=file_content
         )
-        db.add(db_sentimenanalis_file)
+        db.add(db_file)
         db.commit()
-        db.refresh(db_sentimenanalis_file)
+        db.refresh(db_file)
         db.close()
-        print (db_sentimenanalis_file.filename)
+        print (db_file.filename)
 
-        return JSONResponse(content={
-            'data': sentimenanalis_data.to_dict(orient='records'),
-            'id': db_sentimenanalis_file.id,
+        return {
+            'data': new_data.to_dict(orient='records'),
+            'id': db_file.id,
             'label_netral': netral,
             'label_positif':  positif,
             'label_negatif': negatif,
             'wordcloud_base64': img_str,
-        })
-
+        }
+    
     except Exception as e:
         logging.error(f"Terjadi kesalahan: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        return {"error": str(e)}
 
 @app.post("/splitdata/{file_id}")
 async def split_data_endpoint(file_id: int, request: SplitDataRequest):
     try:
-        # Split the data
         X_train, X_test, y_train, y_test = splitdata(file_id, request.test_size)
         
-        # Store split data in temporary storage
         split_data_storage[file_id] = {
             'X_train': X_train,
             'X_test': X_test,
             'y_train': y_train,
             'y_test': y_test,
-            'test_size': request.test_size  # Store test_size for validation
+            'test_size': request.test_size
         }
 
-        # Convert split data to DataFrames
         train_data = pd.DataFrame({'StopWord': X_train, 'SentimentLabel': y_train})
         test_data = pd.DataFrame({'StopWord': X_test, 'SentimentLabel': y_test})
 
-        # Return success message along with train and test data
         return {
             "message": "Preprocessing completed",
             "file_id": file_id,
@@ -862,7 +857,6 @@ async def klasifikasi(file_id: int = Query(...), test_size: float = Query(...)):
     try:
         logging.info(f"Received request with file_id={file_id} and test_size={test_size}")
 
-        # Check if data is already in storage
         if file_id not in split_data_storage or split_data_storage[file_id]['test_size'] != test_size:
             logging.info(f"Splitting data for file_id={file_id} with test_size={test_size}")
             X_train, X_test, y_train, y_test = splitdata(file_id, test_size)
@@ -871,7 +865,7 @@ async def klasifikasi(file_id: int = Query(...), test_size: float = Query(...)):
                 'X_test': X_test,
                 'y_train': y_train,
                 'y_test': y_test,
-                'test_size': test_size  # Store test_size for validation
+                'test_size': test_size
             }
         else:
             logging.info(f"Using cached split data for file_id={file_id}")
@@ -881,11 +875,9 @@ async def klasifikasi(file_id: int = Query(...), test_size: float = Query(...)):
             y_train = data['y_train']
             y_test = data['y_test']
 
-        # Validate that y_train has more than one class
         if len(set(y_train)) <= 1:
             raise ValueError("The number of classes has to be greater than one; got only one class in the training set")
 
-        # Log shapes of the datasets
         logging.info(f"X_train shape: {X_train.shape}")
         logging.info(f"X_test shape: {X_test.shape}")
         logging.info(f"y_train shape: {y_train.shape}")
@@ -910,17 +902,13 @@ async def klasifikasi(file_id: int = Query(...), test_size: float = Query(...)):
         recall_macro = report['macro avg']['recall']
         f1_macro = report['macro avg']['f1-score']
 
-        # Convert the classification report to DataFrame
         report_df = pd.DataFrame(report).transpose()
 
-        # Convert metrics to percentages
         report_df[['precision', 'recall', 'f1-score']] = report_df[['precision', 'recall', 'f1-score']]
         report_df = report_df.round(2)
 
-        # Convert DataFrame back to string for display
         report_str = report_df.to_string()
 
-        # Save results in temporary storage
         results_storage[file_id] = {
             'classification_report': report_str,
             'accuracy': accuracy,
@@ -948,4 +936,6 @@ async def download_preprocessed(file_id: int):
     if db_file is None:
         raise HTTPException(status_code=404, detail="File not found")
     file_path = os.path.join(UPLOAD_DIR, db_file.filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path, media_type='application/octet-stream', filename=db_file.filename)
