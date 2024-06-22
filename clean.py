@@ -8,10 +8,6 @@ stop_words_indonesian = set(stopwords.words('indonesian'))
 stop_words_english = set(stopwords.words('english'))
 
 def remove_emoticon_documents(df):
-    # emoticon_pattern = r'^[\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\u2600-\u26FF\u2700-\u27BF\s]+$'
-    # df['content'] = df['content'].apply(lambda x: '' if re.match(emoticon_pattern, str(x)) else x)
-    # df = df[df['content'] != '']
-    # return df
     emoticon_pattern = r'^[\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\u2600-\u26FF\u2700-\u27BF\s]+$'
     non_alpha_pattern = r'^[^a-zA-Z]*$'
     number_pattern = r'^\d+$'
@@ -52,10 +48,6 @@ def tambahkan_spasi_setelah_tanda_baca(teks):
     pola = re.compile(r'([.,!?/])(?![\s])')
     teks = pola.sub(r'\1 ', teks)
     return teks
-
-def lemmatize_text(tokenized_text):
-    lemmatizer = WordNetLemmatizer()
-    return [lemmatizer.lemmatize(word) for word in tokenized_text]
 
 def stem_text(text):
     factory = StemmerFactory()
