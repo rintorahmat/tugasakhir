@@ -229,6 +229,7 @@ async def process(file_id: int):
         data['HapusTandaBaca'] = data['DeleteEmotikon'].apply(remove_punctuation_and_numbers)
         data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
+        data['Tokenizing'] = data['Tokenizing'].astype(str)
         data['Stemmed'] = data['Tokenizing'].apply(stem_text)
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
         data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
