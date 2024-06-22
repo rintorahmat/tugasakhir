@@ -16,8 +16,6 @@ from fastapi.responses import FileResponse, JSONResponse
 from clean import remove_emoticon_documents, remove_emoticons, remove_punctuation_and_numbers, tambahkan_spasi_setelah_tanda_baca, translate_text, get_sentiment_label_and_polarity, lemmatize_text, stem_text, remove_stopwords
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-lemmatizer = WordNetLemmatizer()
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
@@ -618,7 +616,7 @@ async def tokenize(file_id: int):
 async def stemmed(file_id: int):
     try:
         db = SessionLocal()
-        db_file = db.query(HasilPre8).filter(HasilPre8.id == file_id).first()
+        db_file = db.query(HasilPre7).filter(HasilPre7.id == file_id).first()
         db.close()
         if db_file is None:
             raise HTTPException(status_code=404, detail="File not found")
