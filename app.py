@@ -231,9 +231,7 @@ async def process(file_id: int):
         data['HapusTandaBaca'] = data['DeleteEmotikon'].apply(remove_punctuation_and_numbers)
         data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
-        data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
-        data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
-        data['Stemmed'] = data['Lemmatized'].apply(stem_text)
+        data['Stemmed'] = data['Tokenizing'].apply(stem_text)
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
         data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
@@ -256,7 +254,7 @@ async def process(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
+        new_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
@@ -615,57 +613,6 @@ async def tokenize(file_id: int):
     except Exception as e:
         logging.error(f"Terjadi kesalahan: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
-@app.get("/lemmatized/{file_id}")
-async def lemmatized(file_id: int):
-    try:
-        db = SessionLocal()
-        db_file = db.query(HasilPre7).filter(HasilPre7.id == file_id).first()
-        db.close()
-        if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
-        print(f"Processing file: {db_file.filename}")
-        content = db_file.content
-        data = pd.read_csv(io.BytesIO(content))
-        if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'Tokenizing' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Tokenizing' column found in the file")
-        
-        data['Lemmatized'] = data['Tokenizing'].apply(lemmatize_text)
-        data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))
-
-        data['Lemmatized'] = data['Tokenizing'].apply(lambda x: word_tokenize(x))  # Tokenize the string if not already tokenized
-        data['Lemmatized'] = data['Lemmatized'].apply(lemmatize_tokens)  # Lemmatize each token
-        data['Lemmatized'] = data['Lemmatized'].apply(lambda x: ' '.join(x))  # Join the lemmatized tokens back into a string
-        
-        lemma_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Lemmatized', 'Tokenizing']]
-
-        lemma_file_location = os.path.join(UPLOAD_DIR, 'lematized.csv')
-        lemma_data.to_csv(lemma_file_location, index=False)
-        
-        with open(lemma_file_location, "rb") as file_object:
-            file_content = file_object.read()
-
-        db = SessionLocal()
-        db_lemma_file = HasilPre8(
-            filename='lematized.csv',
-            content=file_content
-        )
-        db.add(db_lemma_file)
-        db.commit()
-        db.refresh(db_lemma_file)
-        db.close()
-        print(db_lemma_file.filename)
-
-        return JSONResponse(content={
-            'data': lemma_data.to_dict(orient='records'),
-            'id': db_lemma_file.id,
-        })
-
-    except Exception as e:
-        logging.error(f"Terjadi kesalahan: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
     
 @app.get("/stemmed/{file_id}")
 async def stemmed(file_id: int):
@@ -680,12 +627,12 @@ async def stemmed(file_id: int):
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'Lemmatized' not in data.columns:
+        if 'Tokenizing' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Lemmatized' column found in the file")
         
-        data['Stemmed'] = data['Lemmatized'].apply(stem_text)
+        data['Stemmed'] = data['Tokenizing'].apply(stem_text)
         
-        stem_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed']]
+        stem_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Stemmed']]
 
         stemm_file_location = os.path.join(UPLOAD_DIR, 'stemmed.csv')
         stem_data.to_csv(stemm_file_location, index=False)
@@ -731,7 +678,7 @@ async def stopword(file_id: int):
         
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
         
-        stopword_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Lemmatized', 'Stemmed', 'StopWord']]
+        stopword_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Stemmed', 'StopWord']]
 
         stopword_file_location = os.path.join(UPLOAD_DIR, 'stopword.csv')
         stopword_data.to_csv(stopword_file_location, index=False)
