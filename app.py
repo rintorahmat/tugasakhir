@@ -177,17 +177,21 @@ async def read_root():
 @app.post("/upload")
 async def process(file: UploadFile = File(...)):
     try:
-        if not file.filename.endswith(('.csv')):
+        if not file.filename.endswith('.csv'):
             return {"error": "Only files with .csv extensions are allowed."}
 
         file_location = os.path.join(UPLOAD_DIR, file.filename)
         with open(file_location, "wb") as file_object:
             shutil.copyfileobj(file.file, file_object)
 
+        row_count = 0
+        with open(file_location, "r", encoding="utf-8") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            row_count = sum(1 for row in csv_reader) - 1  # Exclude header row if present
+
         with open(file_location, "rb") as file_object:
             file_content = file_object.read()
 
-        print(file_content)
         db = SessionLocal()
         db_file = FileModel(
             filename=file.filename,
@@ -197,11 +201,11 @@ async def process(file: UploadFile = File(...)):
         db.commit()
         db.refresh(db_file)
         db.close()
-        print (db_file.filename)
-        
+
         return {
             "info": f"File '{file.filename}' successfully uploaded.",
             "id": db_file.id,
+            "row_count": row_count
         }
     except Exception as e:
         return {"error": str(e)}
