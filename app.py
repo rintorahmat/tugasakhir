@@ -356,7 +356,7 @@ async def translated(file_id: int):
         
         data['Translated'] = data['content'].apply(translate_text)
         
-        translated_data = data[['content', 'Translated']]
+        translated_data = data[['Translated']]
         translated_file_location = os.path.join(UPLOAD_DIR, 'translated_data.csv')
         translated_data.to_csv(translated_file_location, index=False)
         
@@ -401,7 +401,7 @@ async def spacing(file_id: int):
         
         data['Space'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
         
-        spaced_data = data[['content', 'Translated', 'Space']]
+        spaced_data = data[['Space']]
 
         spaced_file_location = os.path.join(UPLOAD_DIR, 'spaced_data.csv')
         spaced_data.to_csv(spaced_file_location, index=False)
@@ -447,7 +447,7 @@ async def delemot(file_id: int):
         
         data['DeleteEmotikon'] = data['Space'].apply(remove_emoticons)
         
-        delemot_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon']]
+        delemot_data = data[['DeleteEmotikon']]
 
         delemot_file_location = os.path.join(UPLOAD_DIR, 'deleteemotikon_data.csv')
         delemot_data.to_csv(delemot_file_location, index=False)
@@ -493,7 +493,7 @@ async def hapustandabaca(file_id: int):
         
         data['HapusTandaBaca'] = data['DeleteEmotikon'].apply(remove_punctuation_and_numbers)
         
-        hapustandabaca_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca']]
+        hapustandabaca_data = data[['HapusTandaBaca']]
 
         hapustandabaca_file_location = os.path.join(UPLOAD_DIR, 'HapusTandaBaca.csv')
         hapustandabaca_data.to_csv(hapustandabaca_file_location, index=False)
@@ -539,7 +539,7 @@ async def lowercasing(file_id: int):
         
         data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
         
-        lowercasing_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing']]
+        lowercasing_data = data[['LowerCasing']]
 
         lowercase_file_location = os.path.join(UPLOAD_DIR, 'Lowercasing.csv')
         lowercasing_data.to_csv(lowercase_file_location, index=False)
@@ -585,7 +585,7 @@ async def tokenize(file_id: int):
         
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
         
-        tokenize_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing']]
+        tokenize_data = data[['Tokenizing']]
 
         tokenize_file_location = os.path.join(UPLOAD_DIR, 'Tokenizing.csv')
         tokenize_data.to_csv(tokenize_file_location, index=False)
@@ -631,7 +631,7 @@ async def stemmed(file_id: int):
         
         data['Stemmed'] = data['Tokenizing'].apply(stem_text)
         
-        stem_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Stemmed']]
+        stem_data = data[['Stemmed']]
 
         stemm_file_location = os.path.join(UPLOAD_DIR, 'stemmed.csv')
         stem_data.to_csv(stemm_file_location, index=False)
@@ -677,7 +677,7 @@ async def stopword(file_id: int):
         
         data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
         
-        stopword_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca', 'LowerCasing', 'Tokenizing', 'Stemmed', 'StopWord']]
+        stopword_data = data[['StopWord']]
 
         stopword_file_location = os.path.join(UPLOAD_DIR, 'stopword.csv')
         stopword_data.to_csv(stopword_file_location, index=False)
@@ -722,7 +722,7 @@ async def sentimenanalis(file_id: int):
         
         data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
-        sentiment_counts = data[['SentimentLabel']].value_counts()
+        sentiment_counts = data[['StopWord', 'SentimentLabel', 'Polarity']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
         positif  = int(sentiment_counts.get('positif', 0))
         negatif = int (sentiment_counts.get('negatif', 0))
