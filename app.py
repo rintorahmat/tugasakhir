@@ -741,7 +741,7 @@ async def sentimenanalis(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['SentimentLabel', 'Polarity'  ]]
+        new_data = data[['StopWord', 'SentimentLabel', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
