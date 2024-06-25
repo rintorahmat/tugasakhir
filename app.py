@@ -154,6 +154,7 @@ def splitdata(file_id: int, test_size: float):
         raise HTTPException(status_code=404, detail="File not found")
     content = db_file.content
     print(f"Processing file: {db_file.filename}")
+    print(data)
     data = pd.read_csv(io.BytesIO(content))
     if data.empty:
         raise HTTPException(status_code=400, detail="No data found in the file")
