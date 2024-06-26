@@ -4,6 +4,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from textblob import TextBlob
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 stop_words_indonesian = set(stopwords.words('indonesian'))
 stop_words_english = set(stopwords.words('english'))
 
