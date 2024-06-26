@@ -27,10 +27,8 @@ def translate_text(text):
     translated_text = GoogleTranslator(source='en', target='id').translate(text)
     return translated_text
 
-def remove_stopwords(text):
-    tokens = text.split()
-    filtered_tokens = [token for token in tokens if token.lower() not in stop_words_indonesian]
-    return ' '.join(filtered_tokens)
+def remove_stopwords(tokens):
+    return [word for word in tokens if word not in stop_words]
 
 # Fungsi untuk menghapus emotikon
 def remove_emoticons(text):
