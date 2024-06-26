@@ -153,7 +153,7 @@ def splitdata(file_id: int, test_size: float):
     if data.empty:
         raise HTTPException(status_code=400, detail="No data found in the file")
 
-    X = data['StopWord']
+    X = data['Stemmed']
     y = data['SentimentLabel']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
@@ -238,7 +238,7 @@ async def process(file_id: int):
         data['Tokenizing'] = data['Tokenizing'].astype(str)
         data['StopWord'] = data['Tokenizing'].apply(lambda x: remove_stopwords(eval(x)))
         data['Stemmed'] = data['StopWord'].apply(stem_text)
-        data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
+        data[['SentimentLabel', 'Polarity']] = data['Stemmed'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
         sentiment_counts = data[['SentimentLabel']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
@@ -636,7 +636,7 @@ async def stopword(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'Tokenizing' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'Tokenizing' column found in the file")
         
         data['StopWord'] = data['Tokenizing'].apply(lambda x: remove_stopwords(eval(x)))
         data['StopWord'] = data['StopWord'].astype(str)
@@ -682,7 +682,7 @@ async def stemmed(file_id: int):
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
         if 'StopWord' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Lemmatized' column found in the file")
+            raise HTTPException(status_code=400, detail="No 'StopWord' column found in the file")
         
         data['Stemmed'] = data['StopWord'].apply(stem_text)
         
@@ -726,18 +726,18 @@ async def sentimenanalis(file_id: int):
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'StopWord' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'StopWord' column found in the file")
+        if 'Stemmed' not in data.columns:
+            raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
         
-        data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
+        data[['SentimentLabel', 'Polarity']] = data['Stemmed'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
-        sentiment_counts = data[['StopWord', 'NilaiAktual', 'SentimentLabel', 'Polarity']].value_counts()
+        sentiment_counts = data[['Stemmed', 'NilaiAktual', 'SentimentLabel', 'Polarity']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
         positif  = int(sentiment_counts.get('positif', 0))
         negatif = int (sentiment_counts.get('negatif', 0))
         
-        data['StopWord'] = data['StopWord'].astype(str)
-        all_text = ''.join(data['StopWord'])
+        data['Stemmed'] = data['Stemmed'].astype(str)
+        all_text = ''.join(data['Stemmed'])
 
         wordcloud = WordCloud(width=1000, height=500, max_font_size=150, random_state=42).generate(all_text)
         buffer = BytesIO()
