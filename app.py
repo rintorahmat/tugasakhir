@@ -318,7 +318,7 @@ async def procesblankdata(file_id: int):
         
         print(f"Number of rows removed: {number_of_rows_removed}")
 
-        new_data = data[['content', 'score']]
+        new_data = data[['content', 'NilaiAktual']]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
