@@ -1,4 +1,5 @@
 import re
+import nltk
 from deep_translator import GoogleTranslator
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
