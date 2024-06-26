@@ -28,8 +28,9 @@ def translate_text(text):
     return translated_text
 
 def remove_stopwords(tokens):
+    stop_words = set(stopwords.words('indonesian'))
     return [word for word in tokens if word not in stop_words]
-
+    
 # Fungsi untuk menghapus emotikon
 def remove_emoticons(text):
     emoticon_pattern = r'[\U00010000-\U0010ffff]'
