@@ -57,12 +57,9 @@ def stem_text(text):
 def get_sentiment_label_and_polarity(text):
     analysis = TextBlob(text)
     polarity = analysis.sentiment.polarity
-
     if polarity > 0:
-        sentiment_label = "positif"
-    elif polarity < 0:
-        sentiment_label = "negatif"
-    else:
-        sentiment_label = "netral"
-
+      sentiment_label = "positif"
+    else :
+      polarity = "negatif"
+        
     return sentiment_label, polarity
