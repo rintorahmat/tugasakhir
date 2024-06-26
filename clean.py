@@ -54,11 +54,15 @@ def stem_text(text):
     return stemmer.stem(text)
 
 def get_sentiment_label_and_polarity(text):
-    analysis = TextBlob(text)
-    polarity = analysis.sentiment.polarity
-    if polarity > 0:
-      sentiment_label = "positif"
-    else :
-      polarity = "negatif"
-        
-    return sentiment_label, polarity
+    sia = SentimentIntensityAnalyzer()
+    polarity_scores = sia.polarity_scores(text)
+    compound_score = polarity_scores['compound']
+
+    if compound_score > 0:
+        sentiment_label = "positif"
+    elif compound_score < 0:
+        sentiment_label = "negatif"
+    else:
+        sentiment_label = "netral"
+
+    return sentiment_label, compound_score
