@@ -795,8 +795,8 @@ async def split_data_endpoint(file_id: int, request: SplitDataRequest):
             'test_size': request.test_size
         }
 
-        train_data = pd.DataFrame({'StopWord': X_train, 'SentimentLabel': y_train})
-        test_data = pd.DataFrame({'StopWord': X_test, 'SentimentLabel': y_test})
+        train_data = pd.DataFrame({'Stemmed': X_train, 'SentimentLabel': y_train})
+        test_data = pd.DataFrame({'Stemmed': X_test, 'SentimentLabel': y_test})
 
         return {
             "message": "Preprocessing completed",
