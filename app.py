@@ -597,6 +597,7 @@ async def tokenize(file_id: int):
             raise HTTPException(status_code=400, detail="No 'LowerCasing' column found in the file")
         
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
+        data['Tokenizing'] = data['Tokenizing'].astype(str)
         
         tokenize_data = data[['Tokenizing']]
 
