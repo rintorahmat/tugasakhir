@@ -69,19 +69,19 @@ class HasilPre3(Base):
     content = Column(BLOB)
 
 class HasilPre4(Base):
-    __tablename__ = "delemot"
+    __tablename__ = "hasillowercasing"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
     content = Column(BLOB)
 
 class HasilPre5(Base):
-    __tablename__ = "deltandabaca"
+    __tablename__ = "hasildeleteemot"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
     content = Column(BLOB)
 
 class HasilPre6(Base):
-    __tablename__ = "hasillowercasing"
+    __tablename__ = "hasilhapustandabaca"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
     content = Column(BLOB)
@@ -93,7 +93,7 @@ class HasilPre7(Base):
     content = Column(BLOB)
 
 class HasilPre8(Base):
-    __tablename__ = "hasillemma"
+    __tablename__ = "hasilstopword"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
     content = Column(BLOB)
@@ -104,11 +104,6 @@ class HasilPre9(Base):
     filename = Column(String, index=True)
     content = Column(BLOB)
 
-class HasilPre10(Base):
-    __tablename__ = "hasilstopword"
-    id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
-    content = Column(BLOB)
 
 Base.metadata.create_all(bind=engine)
 
@@ -414,7 +409,7 @@ async def spacing(file_id: int):
         
         data['Space'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
         
-        spaced_data = data[['Space']]
+        spaced_data = data[['Space', 'NilaiAktual']]
 
         spaced_file_location = os.path.join(UPLOAD_DIR, 'spaced_data.csv')
         spaced_data.to_csv(spaced_file_location, index=False)
@@ -442,11 +437,57 @@ async def spacing(file_id: int):
         logging.error(f"Terjadi kesalahan: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+@app.get("/lowercasing/{file_id}")
+async def lowercasing(file_id: int):
+    try:
+        db = SessionLocal()
+        db_file = db.query(HasilPre3).filter(HasilPre3.id == file_id).first()
+        db.close()
+        if db_file is None:
+            raise HTTPException(status_code=404, detail="File not found")
+        print(f"Processing file: {db_file.filename}")
+        content = db_file.content
+        data = pd.read_csv(io.BytesIO(content))
+        if data.empty:
+            raise HTTPException(status_code=400, detail="No data found in the file")
+        if 'HapusTandaBaca' not in data.columns:
+            raise HTTPException(status_code=400, detail="No 'HapusTandaBaca' column found in the file")
+        
+        data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
+        
+        lowercasing_data = data[['LowerCasing', 'NilaiAktual']]
+
+        lowercase_file_location = os.path.join(UPLOAD_DIR, 'Lowercasing.csv')
+        lowercasing_data.to_csv(lowercase_file_location, index=False)
+        
+        with open(lowercase_file_location, "rb") as file_object:
+            file_content = file_object.read()
+
+        db = SessionLocal()
+        db_lowercasing_file = HasilPre4(
+            filename='Lowercasing.csv',
+            content=file_content
+        )
+        db.add(db_lowercasing_file)
+        db.commit()
+        db.refresh(db_lowercasing_file)
+        db.close()
+        print(db_lowercasing_file.filename)
+
+        return JSONResponse(content={
+            'data': lowercasing_data.to_dict(orient='records'),
+            'id': db_lowercasing_file.id,
+        })
+
+    except Exception as e:
+        logging.error(f"Terjadi kesalahan: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 @app.get("/delemot/{file_id}")
 async def delemot(file_id: int):
     try:
         db = SessionLocal()
-        db_file = db.query(HasilPre3).filter(HasilPre3.id == file_id).first()
+        db_file = db.query(HasilPre4).filter(HasilPre4.id == file_id).first()
         db.close()
         if db_file is None:
             raise HTTPException(status_code=404, detail="File not found")
@@ -460,7 +501,7 @@ async def delemot(file_id: int):
         
         data['DeleteEmotikon'] = data['Space'].apply(remove_emoticons)
         
-        delemot_data = data[['DeleteEmotikon']]
+        delemot_data = data[['DeleteEmotikon', 'NilaiAktual']]
 
         delemot_file_location = os.path.join(UPLOAD_DIR, 'deleteemotikon_data.csv')
         delemot_data.to_csv(delemot_file_location, index=False)
@@ -469,7 +510,7 @@ async def delemot(file_id: int):
             file_content = file_object.read()
 
         db = SessionLocal()
-        db_delemot_file = HasilPre4(
+        db_delemot_file = HasilPre5(
             filename='deleteemotikon_data.csv',
             content=file_content
         )
@@ -492,7 +533,7 @@ async def delemot(file_id: int):
 async def hapustandabaca(file_id: int):
     try:
         db = SessionLocal()
-        db_file = db.query(HasilPre4).filter(HasilPre4.id == file_id).first()
+        db_file = db.query(HasilPre5).filter(HasilPre5.id == file_id).first()
         db.close()
         if db_file is None:
             raise HTTPException(status_code=404, detail="File not found")
@@ -506,7 +547,7 @@ async def hapustandabaca(file_id: int):
         
         data['HapusTandaBaca'] = data['DeleteEmotikon'].apply(remove_punctuation_and_numbers)
         
-        hapustandabaca_data = data[['HapusTandaBaca']]
+        hapustandabaca_data = data[['HapusTandaBaca', 'NilaiAktual']]
 
         hapustandabaca_file_location = os.path.join(UPLOAD_DIR, 'HapusTandaBaca.csv')
         hapustandabaca_data.to_csv(hapustandabaca_file_location, index=False)
@@ -515,7 +556,7 @@ async def hapustandabaca(file_id: int):
             file_content = file_object.read()
 
         db = SessionLocal()
-        db_hapustandabaca_file = HasilPre5(
+        db_hapustandabaca_file = HasilPre6(
             filename='HapusTandaBaca.csv',
             content=file_content
         )
@@ -528,52 +569,6 @@ async def hapustandabaca(file_id: int):
         return JSONResponse(content={
             'data': hapustandabaca_data.to_dict(orient='records'),
             'id': db_hapustandabaca_file.id,
-        })
-
-    except Exception as e:
-        logging.error(f"Terjadi kesalahan: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-@app.get("/lowercasing/{file_id}")
-async def lowercasing(file_id: int):
-    try:
-        db = SessionLocal()
-        db_file = db.query(HasilPre5).filter(HasilPre5.id == file_id).first()
-        db.close()
-        if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
-        print(f"Processing file: {db_file.filename}")
-        content = db_file.content
-        data = pd.read_csv(io.BytesIO(content))
-        if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'HapusTandaBaca' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'HapusTandaBaca' column found in the file")
-        
-        data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
-        
-        lowercasing_data = data[['LowerCasing']]
-
-        lowercase_file_location = os.path.join(UPLOAD_DIR, 'Lowercasing.csv')
-        lowercasing_data.to_csv(lowercase_file_location, index=False)
-        
-        with open(lowercase_file_location, "rb") as file_object:
-            file_content = file_object.read()
-
-        db = SessionLocal()
-        db_lowercasing_file = HasilPre6(
-            filename='Lowercasing.csv',
-            content=file_content
-        )
-        db.add(db_lowercasing_file)
-        db.commit()
-        db.refresh(db_lowercasing_file)
-        db.close()
-        print(db_lowercasing_file.filename)
-
-        return JSONResponse(content={
-            'data': lowercasing_data.to_dict(orient='records'),
-            'id': db_lowercasing_file.id,
         })
 
     except Exception as e:
@@ -599,7 +594,7 @@ async def tokenize(file_id: int):
         data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
         data['Tokenizing'] = data['Tokenizing'].astype(str)
         
-        tokenize_data = data[['Tokenizing']]
+        tokenize_data = data[['Tokenizing', 'NilaiAktual']]
 
         tokenize_file_location = os.path.join(UPLOAD_DIR, 'Tokenizing.csv')
         tokenize_data.to_csv(tokenize_file_location, index=False)
@@ -626,12 +621,58 @@ async def tokenize(file_id: int):
     except Exception as e:
         logging.error(f"Terjadi kesalahan: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-    
+
+@app.get("/stopword/{file_id}")
+async def stopword(file_id: int):
+    try:
+        db = SessionLocal()
+        db_file = db.query(HasilPre7).filter(HasilPre7.id == file_id).first()
+        db.close()
+        if db_file is None:
+            raise HTTPException(status_code=404, detail="File not found")
+        print(f"Processing file: {db_file.filename}")
+        content = db_file.content
+        data = pd.read_csv(io.BytesIO(content))
+        if data.empty:
+            raise HTTPException(status_code=400, detail="No data found in the file")
+        if 'Stemmed' not in data.columns:
+            raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
+        
+        data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
+        
+        stopword_data = data[['StopWord', 'NilaiAktual']]
+
+        stopword_file_location = os.path.join(UPLOAD_DIR, 'stopword.csv')
+        stopword_data.to_csv(stopword_file_location, index=False)
+        
+        with open(stopword_file_location, "rb") as file_object:
+            file_content = file_object.read()
+
+        db = SessionLocal()
+        db_stopword_file = HasilPre8(
+            filename='stopword.csv',
+            content=file_content
+        )
+        db.add(db_stopword_file)
+        db.commit()
+        db.refresh(db_stopword_file)
+        db.close()
+        print(db_stopword_file.filename)
+
+        return JSONResponse(content={
+            'data': stopword_data.to_dict(orient='records'),
+            'id': db_stopword_file.id,
+        })
+
+    except Exception as e:
+        logging.error(f"Terjadi kesalahan: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 @app.get("/stemmed/{file_id}")
 async def stemmed(file_id: int):
     try:
         db = SessionLocal()
-        db_file = db.query(HasilPre7).filter(HasilPre7.id == file_id).first()
+        db_file = db.query(HasilPre8).filter(HasilPre8.id == file_id).first()
         db.close()
         if db_file is None:
             raise HTTPException(status_code=404, detail="File not found")
@@ -645,7 +686,7 @@ async def stemmed(file_id: int):
         
         data['Stemmed'] = data['Tokenizing'].apply(stem_text)
         
-        stem_data = data[['Stemmed']]
+        stem_data = data[['Stemmed', 'NilaiAktual']]
 
         stemm_file_location = os.path.join(UPLOAD_DIR, 'stemmed.csv')
         stem_data.to_csv(stemm_file_location, index=False)
@@ -673,57 +714,11 @@ async def stemmed(file_id: int):
         logging.error(f"Terjadi kesalahan: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@app.get("/stopword/{file_id}")
-async def stopword(file_id: int):
-    try:
-        db = SessionLocal()
-        db_file = db.query(HasilPre9).filter(HasilPre9.id == file_id).first()
-        db.close()
-        if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
-        print(f"Processing file: {db_file.filename}")
-        content = db_file.content
-        data = pd.read_csv(io.BytesIO(content))
-        if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'Stemmed' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
-        
-        data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
-        
-        stopword_data = data[['StopWord']]
-
-        stopword_file_location = os.path.join(UPLOAD_DIR, 'stopword.csv')
-        stopword_data.to_csv(stopword_file_location, index=False)
-        
-        with open(stopword_file_location, "rb") as file_object:
-            file_content = file_object.read()
-
-        db = SessionLocal()
-        db_stopword_file = HasilPre10(
-            filename='stopword.csv',
-            content=file_content
-        )
-        db.add(db_stopword_file)
-        db.commit()
-        db.refresh(db_stopword_file)
-        db.close()
-        print(db_stopword_file.filename)
-
-        return JSONResponse(content={
-            'data': stopword_data.to_dict(orient='records'),
-            'id': db_stopword_file.id,
-        })
-
-    except Exception as e:
-        logging.error(f"Terjadi kesalahan: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
 @app.get("/sentimenanalis/{file_id}")
 async def sentimenanalis(file_id: int):
     try:
         db = SessionLocal()
-        db_file = db.query(HasilPre10).filter(HasilPre10.id == file_id).first()
+        db_file = db.query(HasilPre9).filter(HasilPre9.id == file_id).first()
         db.close()
         if db_file is None:
             raise HTTPException(status_code=404, detail="File not found")
@@ -736,7 +731,7 @@ async def sentimenanalis(file_id: int):
         
         data[['SentimentLabel', 'Polarity']] = data['StopWord'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
-        sentiment_counts = data[['StopWord', 'SentimentLabel', 'Polarity']].value_counts()
+        sentiment_counts = data[['StopWord', 'NilaiAktual', 'SentimentLabel', 'Polarity']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
         positif  = int(sentiment_counts.get('positif', 0))
         negatif = int (sentiment_counts.get('negatif', 0))
