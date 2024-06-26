@@ -638,7 +638,8 @@ async def stopword(file_id: int):
         if 'Tokenizing' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
         
-        data['Stopword'] = data['Tokenizing'].apply(lambda x: remove_stopwords(eval(x)))
+        data['StopWord'] = data['Tokenizing'].apply(lambda x: remove_stopwords(eval(x)))
+        data['StopWord'] = data['StopWord'].astype(str)
         stopword_data = data[['StopWord', 'NilaiAktual']]
 
         stopword_file_location = os.path.join(UPLOAD_DIR, 'stopword.csv')
