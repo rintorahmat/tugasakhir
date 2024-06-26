@@ -242,6 +242,7 @@ async def process(file_id: int):
         data['Tokenizing'] = data['Tokenizing'].astype(str)
         print(data)
         data['StopWord'] = data['Tokenizing'].apply(lambda x: remove_stopwords(eval(x)))
+        data['StopWord'] = data['StopWord'].astype(str)
         print(data)
         data['Stemmed'] = data['StopWord'].apply(stem_text)
         data[['SentimentLabel', 'Polarity']] = data['Stemmed'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
