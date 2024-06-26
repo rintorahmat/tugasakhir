@@ -450,10 +450,10 @@ async def lowercasing(file_id: int):
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'HapusTandaBaca' not in data.columns:
-            raise HTTPException(status_code=400, detail="No 'HapusTandaBaca' column found in the file")
+        if 'Space' not in data.columns:
+            raise HTTPException(status_code=400, detail="No 'Space' column found in the file")
         
-        data['LowerCasing'] = data['HapusTandaBaca'].str.lower()
+        data['LowerCasing'] = data['Space'].str.lower()
         
         lowercasing_data = data[['LowerCasing', 'NilaiAktual']]
 
@@ -496,10 +496,10 @@ async def delemot(file_id: int):
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'Space' not in data.columns:
+        if 'LowerCasing' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Space' column found in the file")
         
-        data['DeleteEmotikon'] = data['Space'].apply(remove_emoticons)
+        data['DeleteEmotikon'] = data['LowerCasing'].apply(remove_emoticons)
         
         delemot_data = data[['DeleteEmotikon', 'NilaiAktual']]
 
@@ -588,10 +588,10 @@ async def tokenize(file_id: int):
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'LowerCasing' not in data.columns:
+        if 'HapusTandaBaca' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'LowerCasing' column found in the file")
         
-        data['Tokenizing'] = data['LowerCasing'].apply(word_tokenize)
+        data['Tokenizing'] = data['HapusTandaBaca'].apply(word_tokenize)
         data['Tokenizing'] = data['Tokenizing'].astype(str)
         
         tokenize_data = data[['Tokenizing', 'NilaiAktual']]
@@ -635,11 +635,10 @@ async def stopword(file_id: int):
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'Stemmed' not in data.columns:
+        if 'Tokenizing' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
         
-        data['StopWord'] = data['Stemmed'].apply(remove_stopwords)
-        
+        data['Stopword'] = data['Tokenizing'].apply(lambda x: remove_stopwords(eval(x)))
         stopword_data = data[['StopWord', 'NilaiAktual']]
 
         stopword_file_location = os.path.join(UPLOAD_DIR, 'stopword.csv')
@@ -681,10 +680,10 @@ async def stemmed(file_id: int):
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
             raise HTTPException(status_code=400, detail="No data found in the file")
-        if 'Tokenizing' not in data.columns:
+        if 'StopWord' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Lemmatized' column found in the file")
         
-        data['Stemmed'] = data['Tokenizing'].apply(stem_text)
+        data['Stemmed'] = data['StopWord'].apply(stem_text)
         
         stem_data = data[['Stemmed', 'NilaiAktual']]
 
