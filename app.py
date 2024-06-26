@@ -264,7 +264,7 @@ async def process(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'NilaiAktual','Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
+        new_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Stemmed', 'StopWord' , 'NilaiAktual', 'SentimentLabel', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
