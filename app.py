@@ -13,7 +13,7 @@ from io import BytesIO
 from fastapi import FastAPI, UploadFile, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from clean import remove_emoticon_documents, remove_emoticons, remove_punctuation_and_numbers, tambahkan_spasi_setelah_tanda_baca, translate_text, get_sentiment_label_and_polarity, stem_text, remove_stopwords, map_score_to_sentiment
+from clean import remove_emoticon_documents, remove_emoticons, remove_punctuation_and_numbers, tambahkan_spasi_setelah_tanda_baca, translate_text, get_sentiment_label_and_polarity, stem_text, remove_stopwords
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
@@ -169,6 +169,16 @@ def splitdata(file_id: int, test_size: float):
 
 def lemmatize_tokens(tokens):
     return [lemmatizer.lemmatize(token) for token in tokens]
+    
+def map_score_to_sentiment(score):
+            if score in [1, 2]:
+                return 'negatif'
+            elif score == 3:
+                return 'netral'
+            elif score in [4, 5]:
+                return 'positif'
+            else:
+                return 'undefined'
 
 @app.get("/")
 async def read_root():
@@ -221,7 +231,7 @@ async def process(file_id: int):
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
         data = data[['content','score']]
-        data['score'] = data['score'].map(map_score_to_sentiment)
+        data['NilaiAktual'] = data['score'].map(map_score_to_sentiment)
         data = remove_emoticon_documents(data)
         data['Translated'] = data['content'].apply(translate_text)
         print(data)
@@ -254,7 +264,7 @@ async def process(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
+        new_data = data[['content', 'NilaiAktual','Translated', 'Space', 'DeleteEmotikon', 'HapusTandaBaca','LowerCasing', 'Tokenizing', 'Stemmed', 'StopWord', 'SentimentLabel', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
@@ -303,7 +313,8 @@ async def procesblankdata(file_id: int):
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
         
-        data = data[['content']]
+        data = data[['content','score']]
+        data['NilaiAktual'] = data['score'].map(map_score_to_sentiment)
         
         data = remove_emoticon_documents(data)
         
@@ -312,7 +323,7 @@ async def procesblankdata(file_id: int):
         
         print(f"Number of rows removed: {number_of_rows_removed}")
 
-        new_data = data[['content']]
+        new_data = data[['content', 'score']]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
@@ -357,7 +368,8 @@ async def translated(file_id: int):
         
         data['Translated'] = data['content'].apply(translate_text)
         
-        translated_data = data[['Translated']]
+        translated_data = data[['Translated', 'NilaiAktual']]
+        print(data)
         translated_file_location = os.path.join(UPLOAD_DIR, 'translated_data.csv')
         translated_data.to_csv(translated_file_location, index=False)
         
