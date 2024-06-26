@@ -231,12 +231,18 @@ async def process(file_id: int):
         data['Translated'] = data['content'].apply(translate_text)
         print(data)
         data['Space'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
+        print(data)
         data['LowerCasing'] = data['Space'].str.lower()
+        print(data)
         data['DeleteEmotikon'] = data['LowerCasing'].apply(remove_emoticons)
+        print(data)
         data['HapusTandaBaca'] = data['DeleteEmotikon'].apply(remove_punctuation_and_numbers)
+        print(data)
         data['Tokenizing'] = data['HapusTandaBaca'].apply(word_tokenize)
         data['Tokenizing'] = data['Tokenizing'].astype(str)
+        print(data)
         data['StopWord'] = data['Tokenizing'].apply(lambda x: remove_stopwords(eval(x)))
+        print(data)
         data['Stemmed'] = data['StopWord'].apply(stem_text)
         data[['SentimentLabel', 'Polarity']] = data['Stemmed'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
@@ -750,7 +756,7 @@ async def sentimenanalis(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['StopWord', 'SentimentLabel', 'Polarity'  ]]
+        new_data = data[['StopWord', 'NilaiAktual', 'SentimentLabel', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
