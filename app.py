@@ -146,7 +146,7 @@ def splitdata(file_id: int, test_size: float):
     db_file = db.query(HasilPre).filter(HasilPre.id == file_id).first()
     db.close()
     if db_file is None:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="File data hasil Preprocessing tidak ditemukan")
     content = db_file.content
     print(f"Processing file: {db_file.filename}")
     data = pd.read_csv(io.BytesIO(content))
@@ -230,7 +230,6 @@ async def process(file_id: int):
         data = remove_emoticon_documents(data)
         data['Translated'] = data['content'].apply(translate_text)
         data['Space'] = data['Translated'].apply(tambahkan_spasi_setelah_tanda_baca)
-        print(data)
         data['LowerCasing'] = data['Space'].str.lower()
         data['DeleteEmotikon'] = data['LowerCasing'].apply(remove_emoticons)
         data['HapusTandaBaca'] = data['DeleteEmotikon'].apply(remove_punctuation_and_numbers)
@@ -298,14 +297,14 @@ async def procesblankdata(file_id: int):
         db_file = db.query(FileModel).filter(FileModel.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data upload tidak ditemukan")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         
         initial_row_count = len(data)
 
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data upload tidak ditemukan")
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
         
@@ -354,11 +353,11 @@ async def translated(file_id: int):
         db_file = db.query(HasilPre1).filter(HasilPre1.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Delete Blank Line tidak ditemukan")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Delete Blank Line tidak ditemukan")
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
         
@@ -399,12 +398,12 @@ async def spacing(file_id: int):
         db_file = db.query(HasilPre2).filter(HasilPre2.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Translated tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Translated tidak ditemukan")
         if 'Translated' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Translated' column found in the file")
         
@@ -445,12 +444,12 @@ async def lowercasing(file_id: int):
         db_file = db.query(HasilPre3).filter(HasilPre3.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Space tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Space tidak ditemukan")
         if 'Space' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Space' column found in the file")
         
@@ -491,12 +490,12 @@ async def delemot(file_id: int):
         db_file = db.query(HasilPre4).filter(HasilPre4.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Lowercasing tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Lowercasing tidak ditemukan")
         if 'LowerCasing' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Space' column found in the file")
         
@@ -537,12 +536,12 @@ async def hapustandabaca(file_id: int):
         db_file = db.query(HasilPre5).filter(HasilPre5.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Delete Emotikon tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Delete Emotikon tidak ditemukan")
         if 'DeleteEmotikon' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'DeleteEmotikon' column found in the file")
         
@@ -583,12 +582,12 @@ async def tokenize(file_id: int):
         db_file = db.query(HasilPre6).filter(HasilPre6.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Remove Punctuation tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Remove Punctuation tidak ditemukan")
         if 'HapusTandaBaca' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'LowerCasing' column found in the file")
         
@@ -630,12 +629,12 @@ async def stopword(file_id: int):
         db_file = db.query(HasilPre7).filter(HasilPre7.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Tokenizing tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Tokenizing tidak ditemukan")
         if 'Tokenizing' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Tokenizing' column found in the file")
         
@@ -676,12 +675,12 @@ async def stemmed(file_id: int):
         db_file = db.query(HasilPre8).filter(HasilPre8.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil StopWord tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil StopWord tidak ditemukan")
         if 'StopWord' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'StopWord' column found in the file")
         
@@ -722,11 +721,11 @@ async def sentimenanalis(file_id: int):
         db_file = db.query(HasilPre9).filter(HasilPre9.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File data hasil Stemmed tidak ditemukan")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="No data found in the file")
+            raise HTTPException(status_code=400, detail="File data hasil Stemmed tidak ditemukan")
         if 'Stemmed' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'Stemmed' column found in the file")
         
