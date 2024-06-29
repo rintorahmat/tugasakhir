@@ -350,7 +350,7 @@ async def procesblankdata(file_id: int):
 async def translated(file_id: int):
     try:
         db = SessionLocal()
-        db_file = db.query(HasilPre2).filter(HasilPre2.id == file_id).first()
+        db_file = db.query(HasilPre1).filter(HasilPre1.id == file_id).first()
         db.close()
         if db_file is None:
             raise HTTPException(status_code=404, detail="File data hasil Space tidak ditemukan")
