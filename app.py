@@ -51,71 +51,75 @@ Base = declarative_base()
 class FileModel(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre(Base):
     __tablename__ = "hasilpre"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre1(Base):
     __tablename__ = "hasildeleteline"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre2(Base):
     __tablename__ = "hasiltrans"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre3(Base):
     __tablename__ = "hasilspacing"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre4(Base):
     __tablename__ = "hasillowercasing"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre5(Base):
     __tablename__ = "hasildeleteemot"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre6(Base):
     __tablename__ = "hasilhapustandabaca"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre7(Base):
     __tablename__ = "hasiltoken"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre8(Base):
     __tablename__ = "hasilstopword"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 class HasilPre9(Base):
     __tablename__ = "hasilstem"
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
+    filename = Column(String(255), index=True)
     content = Column(BLOB)
 
 
 Base.metadata.create_all(bind=engine)
+@app.on_event("startup")
+def on_startup():
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
 
 logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
