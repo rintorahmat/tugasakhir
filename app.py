@@ -21,7 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
-from sqlalchemy import create_engine, Column, Integer, String, LONGTEXT, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
@@ -52,67 +52,67 @@ class FileModel(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre(Base):
     __tablename__ = "hasilpre"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre1(Base):
     __tablename__ = "hasildeleteline"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre2(Base):
     __tablename__ = "hasiltrans"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre3(Base):
     __tablename__ = "hasilspacing"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre4(Base):
     __tablename__ = "hasillowercasing"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre5(Base):
     __tablename__ = "hasildeleteemot"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre6(Base):
     __tablename__ = "hasilhapustandabaca"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre7(Base):
     __tablename__ = "hasiltoken"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre8(Base):
     __tablename__ = "hasilstopword"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 class HasilPre9(Base):
     __tablename__ = "hasilstem"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(LONGTEXT)
+    content = Column(Text)
 
 
 Base.metadata.create_all(bind=engine)
