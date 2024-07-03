@@ -21,7 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
-from sqlalchemy import create_engine, Column, Integer, String, BLOB
+from sqlalchemy import create_engine, Column, Integer, String, BLOB, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
