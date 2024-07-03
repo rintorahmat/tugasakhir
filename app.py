@@ -32,7 +32,17 @@ app = FastAPI()
 split_data_storage = {}
 results_storage = {}
 
-DATABASE_URL = "mysql+pymysql://admin:admin@34.30.136.207/tugasakhir"
+DATABASE_SERVER_URL = "mysql+pymysql://admin:admin@34.30.136.207"
+DATABASE_NAME = "tugasakhir"
+
+# Create a temporary connection to create the database if it doesn't exist
+temp_engine = create_engine(DATABASE_SERVER_URL)
+with temp_engine.connect() as conn:
+    conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {DATABASE_NAME}"))
+
+# Now connect to the specific database
+DATABASE_URL = f"mysql+pymysql://admin:admin@34.30.136.207/{DATABASE_NAME}"
+# DATABASE_URL = "mysql+pymysql://admin:admin@34.30.136.207/tugasakhir"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
