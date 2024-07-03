@@ -364,12 +364,12 @@ async def translated(file_id: int):
         db_file = db.query(HasilPre1).filter(HasilPre1.id == file_id).first()
         db.close()
         if db_file is None:
-            raise HTTPException(status_code=404, detail="File data hasil Space tidak ditemukan")
+            raise HTTPException(status_code=404, detail="File data hasil Delete Blank Line tidak ditemukan")
         print(f"Processing file: {db_file.filename}")
         content = db_file.content
         data = pd.read_csv(io.BytesIO(content))
         if data.empty:
-            raise HTTPException(status_code=400, detail="File data hasil Space tidak ditemukan")
+            raise HTTPException(status_code=400, detail="File data hasil Delete Blank Line tidak ditemukan")
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
         
