@@ -21,7 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
-from sqlalchemy import create_engine, Column, Integer, String, Text, text
+from sqlalchemy import create_engine, Column, Integer, String, LONGTEXT, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
@@ -58,7 +58,7 @@ class HasilPre(Base):
     __tablename__ = "hasilpre"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(LONGTEXT)
 
 class HasilPre1(Base):
     __tablename__ = "hasildeleteline"
