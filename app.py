@@ -21,7 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
-from sqlalchemy import create_engine, Column, Integer, String, Text, text
+from sqlalchemy import create_engine, Column, Integer, String, BLOB, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from wordcloud import WordCloud
@@ -35,14 +35,11 @@ results_storage = {}
 DATABASE_SERVER_URL = "mysql+pymysql://admin:admin@34.30.136.207"
 DATABASE_NAME = "tugasakhir"
 
-# Create a temporary connection to create the database if it doesn't exist
 temp_engine = create_engine(DATABASE_SERVER_URL)
 with temp_engine.connect() as conn:
     conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {DATABASE_NAME}"))
 
-# Now connect to the specific database
 DATABASE_URL = f"mysql+pymysql://admin:admin@34.30.136.207/{DATABASE_NAME}"
-# DATABASE_URL = "mysql+pymysql://admin:admin@34.30.136.207/tugasakhir"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -52,67 +49,67 @@ class FileModel(Base):
     __tablename__ = "files"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre(Base):
     __tablename__ = "hasilpre"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre1(Base):
     __tablename__ = "hasildeleteline"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre2(Base):
     __tablename__ = "hasiltrans"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre3(Base):
     __tablename__ = "hasilspacing"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre4(Base):
     __tablename__ = "hasillowercasing"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre5(Base):
     __tablename__ = "hasildeleteemot"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre6(Base):
     __tablename__ = "hasilhapustandabaca"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre7(Base):
     __tablename__ = "hasiltoken"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre8(Base):
     __tablename__ = "hasilstopword"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 class HasilPre9(Base):
     __tablename__ = "hasilstem"
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True)
-    content = Column(Text)
+    content = Column(BLOB)
 
 
 Base.metadata.create_all(bind=engine)
