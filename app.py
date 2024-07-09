@@ -237,6 +237,7 @@ async def process(file_id: int):
         if 'content' not in data.columns:
             raise HTTPException(status_code=400, detail="No 'content' column found in the file")
         data = data[['content','score']]
+        print(data)
         data['NilaiAktual'] = data['score'].map(map_score_to_sentiment)
         data = remove_emoticon_documents(data)
         data['Translated'] = data['content'].apply(translate_text)
