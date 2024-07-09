@@ -744,7 +744,7 @@ async def sentimenanalis(file_id: int):
         
         data[['SentimentLabel', 'Polarity']] = data['Stemmed'].apply(lambda x: pd.Series(get_sentiment_label_and_polarity(x)))
 
-        sentiment_counts = data[['content', 'Translated', 'Space','LowerCasing', 'DeleteEmotikon', 'HapusTandaBaca', 'Tokenizing', 'StopWord', 'Stemmed', 'NilaiAktual', 'SentimentLabel', 'Polarity']].value_counts()
+        sentiment_counts = data[['Stemmed', 'NilaiAktual', 'SentimentLabel', 'Polarity']].value_counts()
         netral = int(sentiment_counts.get('netral', 0))
         positif  = int(sentiment_counts.get('positif', 0))
         negatif = int (sentiment_counts.get('negatif', 0))
@@ -763,7 +763,7 @@ async def sentimenanalis(file_id: int):
 
         img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-        new_data = data[['content', 'Translated', 'Space','LowerCasing', 'DeleteEmotikon', 'HapusTandaBaca', 'Tokenizing', 'StopWord', 'Stemmed', 'NilaiAktual', 'SentimentLabel', 'Polarity'  ]]
+        new_data = data[['Stemmed', 'NilaiAktual', 'SentimentLabel', 'Polarity'  ]]
         save_preprocessed_data(new_data)
         
         file_location = os.path.join(UPLOAD_DIR, 'preprocessed_data.csv')
